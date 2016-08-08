@@ -11,8 +11,9 @@ end)
 
 script.on_event(defines.events.on_player_created, function(event)
   local player = game.players[event.player_index]
-  player.print("Info: PVP server mod v0.1 (c) byte")
+  player.print("Info: PVP server mod v0.1 (c) byte");
   guiNewPlayer(player.gui.left);
+  printNewPlayer(player);
   
   player.insert{name="light-armor", count=1}
   player.insert{name="iron-plate", count=8}
@@ -45,20 +46,16 @@ script.on_event(defines.events.on_rocket_launched, function(event)
     end
     for index, player in pairs(force.players) do
       if player.gui.left.rocket_score == nil then
-        local frame = player.gui.left.add{name = "rocket_score", type = "frame", direction = "horizontal", caption={"score"}}
-        frame.add{name="rocket_count_label", type = "label", caption={"", {"rockets-sent"}, ":"}}
+        local frame = player.gui.left.add{name = "rocket_score", type = "frame", direction = "horizontal", caption={"gui.score"}}
+        frame.add{name="rocket_count_label", type = "label", caption={"", {"gui.rockets-sent"}, ":"}}
         frame.add{name="rocket_count", type = "label", caption=tostring(global.satellite_sent[force.name])}
       else
         player.gui.left.rocket_score.rocket_count.caption = tostring(global.satellite_sent[force.name])
       end
     end
   else
-    if (#game.players <= 1) then
-      game.show_message_dialog{text = {"gui-rocket-silo.rocket-launched-without-satellite"}}
-    else
-      for index, player in pairs(force.players) do
-        player.print({"gui-rocket-silo.rocket-launched-without-satellite"})
-      end
+    for index, player in pairs(force.players) do
+      player.print({"msg.gui-rocket-silo.rocket-launched-without-satellite"})
     end
   end
 end)
@@ -76,12 +73,13 @@ script.on_event(defines.events.on_gui_click, function(event)
       player.force.chart(player.surface, {{player.position.x - 200, player.position.y - 200}, {player.position.x + 200, player.position.y + 200}})
       gui.new_force.destroy();
       guiForcePlayer(gui);
-      player.print("New Force Created!")
+      player.print{"msg.force-created"}
+      printForcePlayer(player)
     else
-      player.print("This position to close from another force!")
+      player.print{"msg.close-position"}
     end
   elseif event.element.name == "inv_button" then
-    local name = gui.inv_force.inv_name.text;
+    local name = gui.own_force.inv_name.text;
     if name ~= nil and validPlayer(name) then
       local iplayer = game.players[name];
       local igui = iplayer.gui.left;
@@ -91,24 +89,26 @@ script.on_event(defines.events.on_gui_click, function(event)
       
       igui.new_force.destroy();
       guiForcePlayer(igui);
-      player.print("Player ".. name .. " invated to you force.");
-      iplayer.print("You invated by  ".. player.name);
+      player.print{"msg.player-invated", name}
+      iplayer.print{"msg.you-invated", player.name}
     else
-      player.print("Player name invalid of player in another force!")
+      player.print{"msg.invalid-name"}
     end
-  elseif event.element.name == "leave_button" then
+  elseif event.element.name == "leave_button" and gui.own_force.inv_name.text == "leave" then
     if #player.force.players == 1 then 
       game.merge_forces(player.force.name, game.forces.player.name);
       gui.own_force.destroy();
       guiNewPlayer(gui);
-      player.print("You force destroyed!");
+      player.print{"msg.force-destroyed"}
     elseif #player.force.players > 1 then
       player.force = game.forces.player;
       player.character.die();
       gui.own_force.destroy();
       guiNewPlayer(gui);
-      player.print("You leave force!");
-    end    
+      player.print{"msg.force-leave"}
+    end 
+  elseif event.element.name == "leave_button" and gui.own_force.inv_name.text ~= "leave" then
+    player.print{"msg.force-leave-confim"}
   end
 end)
 
@@ -139,18 +139,26 @@ function validPlayer(name)
 end
 
 function guiNewPlayer(gui)
-  local frame = gui.add{type="frame", name="new_force", caption="Create Force", direction="vertical"}
-  frame.add{type="button", name="new_button", caption="New Force"}
-  frame.add{type="label", name="new_label", caption="You can create your own force OR wait for another invitation."}
-  frame.add{type="label", name="new_label2", caption="Do not click if you are waiting for an invitation!"}
-  frame.add{type="label", name="new_label3", caption="Before creating his team select the location for the base and press the button."}
-  frame.add{type="label", name="new_label4", caption="Respawn point will be installed where you stand."}
-  frame.add{type="label", name="new_label5", caption="Bitters will run away from you."}
+  local frame = gui.add{type="frame", name="new_force", caption={"gui.create-force"}, direction="vertical"}
+  frame.add{type="button", name="new_button", caption={"gui.new-force"}}
 end
 
 function guiForcePlayer(gui)
-  local frame = gui.add{type="frame", name="own_force", caption="Force", direction="vertical"}
-  frame.add{type="textfield", name="inv_name", caption="Invite Player"}
-  frame.add{type="button", name="inv_button", caption="Invite Player"}
-  frame.add{type="button", name="leave_button", caption="Leave"}
+  local frame = gui.add{type="frame", name="own_force", caption={"gui.force"}, direction="vertical"}
+  frame.add{type="textfield", name="inv_name"}
+  frame.add{type="button", name="inv_button", caption={"gui.invite"}}
+  frame.add{type="button", name="leave_button", caption={"gui.leave"}}
+end
+
+function printNewPlayer(player)
+  player.print{"msg.info1"}
+  player.print{"msg.info2"}
+  player.print{"msg.info3"}
+  player.print{"msg.info4"}
+  player.print{"msg.info5"}
+end
+
+function printForcePlayer(player)
+  player.print{"msg.info11"}
+  player.print{"msg.info12"}
 end
